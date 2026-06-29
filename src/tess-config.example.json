@@ -1,0 +1,8 @@
+{
+  "tenant_id": "PUT-YOUR-ENTRA-TENANT-ID-HERE",
+  "client_id": "PUT-YOUR-ENTRA-CLIENT-ID-HERE",
+  "role_arn": "arn:aws:iam::123456789012:role/your-role",
+  "region": "us-east-1",
+  "refresh_interval_minutes": 50,
+  "session_max_hours": 8
+}

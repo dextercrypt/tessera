@@ -1,0 +1,19 @@
+# tess runtime dependencies — pinned to the exact versions this release was
+# verified against. pip resolves the transitive tree (and picks the right
+# per-OS wheels) automatically, so this single file works on macOS, Linux, and
+# Windows with no per-platform variants.
+#
+# Bumping a dependency: change the version here and re-test.
+#
+# (Optional, high-security deployments only) For defense against a compromised
+# package index serving a tampered build of a pinned version, you can generate
+# a hashed lockfile and install with --require-hashes. Note this must be done
+# PER OS — desktop-notifier and msal-extensions pull different backends on
+# macOS / Linux / Windows — so it's per-platform maintenance, not required for
+# typical use:
+#     pip install pip-tools
+#     pip-compile --generate-hashes -o requirements-$(uname).lock requirements.txt
+#     pip install --require-hashes -r requirements-<os>.lock
+msal==1.37.0
+msal-extensions==1.3.1
+desktop-notifier==6.2.0
