@@ -33,21 +33,31 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM ---- 2. Locate the program source (..\src relative to this script) ----
+REM ---- 2. Locate the program source: local ..\src, else fetch the pinned release ----
+REM Bump TESS_REF when cutting a new release.
 set SCRIPT_DIR=%~dp0
+set TESS_REF=v1.0.0
+set RAW_BASE=https://raw.githubusercontent.com/dextercrypt/tessera/%TESS_REF%
+set STAGE=%TEMP%\tessera-setup
 set SRC_DIR=%SCRIPT_DIR%..\src\
-if not exist "%SRC_DIR%tess.py" (
-    echo ERROR: tess.py not found in %SRC_DIR%
-    echo Run this script from the setup\ folder of an intact tess bundle.
-    exit /b 1
-)
-if not exist "%SRC_DIR%tess-config.example.json" (
-    echo ERROR: tess-config.example.json not found in %SRC_DIR%
-    exit /b 1
-)
-if not exist "%SRC_DIR%requirements.txt" (
-    echo ERROR: requirements.txt not found in %SRC_DIR%
-    exit /b 1
+
+if exist "%SRC_DIR%tess.py" (
+    echo Using local source: %SRC_DIR%
+) else (
+    echo No local ..\src - fetching tess %TESS_REF% from GitHub...
+    if exist "%STAGE%" rmdir /s /q "%STAGE%"
+    mkdir "%STAGE%\src"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+      "$ErrorActionPreference='Stop';" ^
+      "$base='%RAW_BASE%'; $stage='%STAGE%';" ^
+      "foreach($f in 'src/tess.py','src/requirements.txt','src/tess-config.example.json','SHA256SUMS'){ $out=Join-Path $stage ($f -replace '/','\'); Invoke-WebRequest -UseBasicParsing \"$base/$f\" -OutFile $out }" ^
+      "foreach($l in Get-Content (Join-Path $stage 'SHA256SUMS')){ if($l -match '^([0-9a-fA-F]{64})\s+\*?(.+)$'){ $want=$Matches[1].ToLower(); $rel=$Matches[2].Trim(); $p=Join-Path $stage ($rel -replace '/','\'); $got=(Get-FileHash -Algorithm SHA256 $p).Hash.ToLower(); if($want -ne $got){ throw \"checksum mismatch for $rel\" } } }" ^
+      "Write-Host 'Verified tess %TESS_REF%.'"
+    if errorlevel 1 (
+        echo ERROR: download or checksum verification failed - aborting install.
+        exit /b 1
+    )
+    set SRC_DIR=%STAGE%\src\
 )
 
 REM Welcome banner (rendered by Python so it is byte-identical on every OS).
@@ -59,8 +69,16 @@ set DATA_DIR=%LOCALAPPDATA%\tess
 set VENV_DIR=%DATA_DIR%\venv
 set CONFIG_DIR=%APPDATA%\tess
 
+REM Detect whether this is a fresh install or an update of an existing one.
+if exist "%DATA_DIR%\tess.py" (set MODE=update) else (set MODE=install)
+
 echo Data directory:   %DATA_DIR%
 echo Config directory: %CONFIG_DIR%
+if "%MODE%"=="update" (
+    echo Existing installation found ^> updating tess in place.
+) else (
+    echo No existing installation ^> fresh install.
+)
 
 if exist "%VENV_DIR%" (
     echo Removing existing venv...
@@ -162,18 +180,33 @@ del "%TASK_XML%" >nul 2>nul
 
 REM ---- Done ----
 echo.
-echo === Setup complete ===
+if "%MODE%"=="update" (
+    echo === Update complete ===
+    echo.
+    echo tess was already installed — the program was updated in place.
+    echo If a session is currently running, reload the new code with:
+    echo   tess stop ^&^& tess start
+) else (
+    echo === Setup complete ===
+)
 echo.
-echo Config: no tess-config.json yet. Create it once:
-echo   copy "%CONFIG_DIR%\tess-config.example.json" "%CONFIG_DIR%\tess-config.json"
-echo   then edit: tenant_id, client_id, role_arn, region
-echo (Or have it delivered to that path by your org, or pass --config / set TESS_CONFIG.)
+if exist "%CONFIG_DIR%\tess-config.json" (
+    echo Config: tess-config.json already present at %CONFIG_DIR% ^(left untouched^).
+) else (
+    echo Config: no tess-config.json yet. Create it once:
+    echo   copy "%CONFIG_DIR%\tess-config.example.json" "%CONFIG_DIR%\tess-config.json"
+    echo   then edit: tenant_id, client_id, role_arn, region
+    echo ^(Or have it delivered to that path by your org, or pass --config / set TESS_CONFIG.^)
+)
 echo.
 echo Next steps:
 echo   1. Sign out of Windows and sign back in once
 echo      (so environment variables take effect for IntelliJ etc.)
 echo   2. After signing back in, run: tess start
 echo.
+
+REM Clean up the fetch staging dir (only exists if we downloaded a release).
+if exist "%STAGE%" rmdir /s /q "%STAGE%" >nul 2>nul
 
 endlocal
 exit /b 0

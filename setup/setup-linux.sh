@@ -39,14 +39,40 @@ if ! python3 -c "import venv" 2>/dev/null; then
     exit 1
 fi
 
-# ---- 2. Locate the program source (../src relative to this script) ----
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC_DIR="$(cd "$SCRIPT_DIR/../src" 2>/dev/null && pwd || true)"
+# ---- 2. Locate the program source: local ../src, else fetch the pinned release ----
+# Bump TESS_REF when cutting a new release; override (e.g. TESS_REF=main) to test.
+TESS_REF="${TESS_REF:-v1.0.0}"
+RAW_BASE="https://raw.githubusercontent.com/dextercrypt/tessera/${TESS_REF}"
 
-if [ -z "$SRC_DIR" ] || [ ! -f "$SRC_DIR/tess.py" ] || [ ! -f "$SRC_DIR/tess-config.example.json" ] || [ ! -f "$SRC_DIR/requirements.txt" ]; then
-    echo "ERROR: tess.py, tess-config.example.json, or requirements.txt not found in ../src (looked in: $SRC_DIR)"
-    echo "Run this script from the setup/ folder of an intact tess bundle."
-    exit 1
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || true)"
+LOCAL_SRC="$(cd "${SCRIPT_DIR:-.}/../src" 2>/dev/null && pwd || true)"
+
+if [ -n "$LOCAL_SRC" ] && [ -f "$LOCAL_SRC/tess.py" ] \
+   && [ -f "$LOCAL_SRC/requirements.txt" ] && [ -f "$LOCAL_SRC/tess-config.example.json" ]; then
+    SRC_DIR="$LOCAL_SRC"
+    echo "Using local source: $SRC_DIR"
+else
+    # Standalone run (e.g. piped from curl) — fetch the pinned, checksum-verified
+    # release into a throwaway temp dir, verify BEFORE anything is installed.
+    echo "No local ../src — fetching tess $TESS_REF from GitHub..."
+    command -v curl >/dev/null 2>&1 || { echo "ERROR: curl is required to download tess."; exit 1; }
+    STAGE="$(mktemp -d)"
+    trap 'rm -rf "$STAGE"' EXIT
+    mkdir -p "$STAGE/src"
+    for f in src/tess.py src/requirements.txt src/tess-config.example.json SHA256SUMS; do
+        curl -fsSL "$RAW_BASE/$f" -o "$STAGE/$f" \
+            || { echo "ERROR: failed to download $f from $RAW_BASE"; exit 1; }
+    done
+    echo "Verifying checksums..."
+    if command -v sha256sum >/dev/null 2>&1; then
+        ( cd "$STAGE" && sha256sum -c SHA256SUMS ) \
+            || { echo "ERROR: checksum verification failed — aborting install."; exit 1; }
+    else
+        ( cd "$STAGE" && shasum -a 256 -c SHA256SUMS ) \
+            || { echo "ERROR: checksum verification failed — aborting install."; exit 1; }
+    fi
+    SRC_DIR="$STAGE/src"
+    echo "Verified tess $TESS_REF."
 fi
 
 # Welcome banner (rendered by Python so it is byte-identical on every OS).
@@ -58,8 +84,20 @@ DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/tess"
 VENV_DIR="$DATA_DIR/venv"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tess"
 
+# Detect whether this is a fresh install or an update of an existing one.
+if [ -f "$DATA_DIR/tess.py" ]; then
+    MODE="update"
+else
+    MODE="install"
+fi
+
 echo "Data directory:   $DATA_DIR"
 echo "Config directory: $CONFIG_DIR"
+if [ "$MODE" = "update" ]; then
+    echo "Existing installation found → updating tess in place."
+else
+    echo "No existing installation → fresh install."
+fi
 
 if [ -d "$VENV_DIR" ]; then
     echo "Removing existing venv..."
@@ -197,12 +235,24 @@ fi
 
 # ---- Done ----
 echo
-echo "=== Setup complete ==="
+if [ "$MODE" = "update" ]; then
+    echo "=== Update complete ==="
+    echo
+    echo "tess was already installed — the program was updated in place."
+    echo "If a session is currently running, reload the new code with:"
+    echo "  tess stop && tess start"
+else
+    echo "=== Setup complete ==="
+fi
 echo
-echo "Config: no tess-config.json yet. Create it once:"
-echo "  cp \"$CONFIG_DIR/tess-config.example.json\" \"$CONFIG_DIR/tess-config.json\""
-echo "  then edit: tenant_id, client_id, role_arn, region"
-echo "(Or have it delivered to that path by your org, or pass --config / set \$TESS_CONFIG.)"
+if [ -f "$CONFIG_DIR/tess-config.json" ]; then
+    echo "Config: tess-config.json already present at $CONFIG_DIR (left untouched)."
+else
+    echo "Config: no tess-config.json yet. Create it once:"
+    echo "  cp \"$CONFIG_DIR/tess-config.example.json\" \"$CONFIG_DIR/tess-config.json\""
+    echo "  then edit: tenant_id, client_id, role_arn, region"
+    echo "(Or have it delivered to that path by your org, or pass --config / set \$TESS_CONFIG.)"
+fi
 echo
 echo "Next steps:"
 echo "  1. Quit and reopen your terminal (so PATH and env vars refresh)."

@@ -76,6 +76,9 @@ DEFAULT_REFRESH_INTERVAL_MINUTES = 50
 DEFAULT_SESSION_MAX_HOURS = 8
 FAILURE_BACKOFF_SECONDS = 300            # retry every 5 min on failure
 FAILURE_GIVE_UP_AFTER_SECONDS = 1800     # give up after 30 min of failures
+# A single dropped connection recovers on the next cycle, so log the first few
+# refresh failures as WARNING; only escalate to ERROR once they persist.
+TRANSIENT_FAILURE_GRACE = 3              # consecutive failures before ERROR
 REFRESH_SIGNAL_CHECK_SECONDS = 5         # how often daemon checks for refresh signal
 
 
@@ -959,7 +962,7 @@ def cmd_stop(args):
 
 def _stop_internal(quiet: bool = False) -> int:
     pid = read_pid()
-    had_session = pid is not None
+    had_session = pid is not None and is_process_alive(pid)
     if pid is not None:
         kill_process(pid)
     cleanup_session_files()
@@ -967,7 +970,7 @@ def _stop_internal(quiet: bool = False) -> int:
     if had_session:
         log_event("session stopped")
     if not quiet:
-        print("Session ended.")
+        print("Session ended." if had_session else "No active session to stop.")
     return 0
 
 
@@ -1387,6 +1390,7 @@ def cmd_refresh_daemon(config_file: str | None):
 
     app, cache = build_msal_app(config, clear_cache=False)
     failures_start: float | None = None
+    consecutive_failures = 0
 
     next_refresh = time.time() + refresh_interval
 
@@ -1447,7 +1451,13 @@ def cmd_refresh_daemon(config_file: str | None):
                     )
                 id_token = result["id_token"]
             except Exception as e:
-                logger.error("silent refresh failed: %s", e)
+                consecutive_failures += 1
+                # First few are likely a transient blip that recovers next cycle —
+                # log WARNING. Escalate to ERROR only once failures persist.
+                level = (logging.ERROR if consecutive_failures >= TRANSIENT_FAILURE_GRACE
+                         else logging.WARNING)
+                logger.log(level, "silent refresh failed (attempt %d): %s",
+                           consecutive_failures, e)
                 if failures_start is None:
                     failures_start = time.time()
                     notify(
@@ -1492,6 +1502,7 @@ def cmd_refresh_daemon(config_file: str | None):
                     next_refresh = time.time() + FAILURE_BACKOFF_SECONDS
                 else:
                     failures_start = None  # clear failure streak
+                    consecutive_failures = 0
                     next_refresh = time.time() + refresh_interval
                     if prev_exp and new_exp and new_exp <= prev_exp:
                         logger.warning(

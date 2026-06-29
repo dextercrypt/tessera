@@ -59,7 +59,6 @@ if exist "%DATA_DIR%" (
 REM ---- 6. Clean the config dir: remove our template. Preserve a
 REM user-authored tess-config.json (it's their data). rmdir only if empty. ----
 if exist "%CONFIG_DIR%\tess-config.example.json" del /f /q "%CONFIG_DIR%\tess-config.example.json" >nul 2>nul
-if exist "%CONFIG_DIR%\env.sh" del /f /q "%CONFIG_DIR%\env.sh" >nul 2>nul
 if exist "%CONFIG_DIR%" (
     rmdir "%CONFIG_DIR%" >nul 2>nul && (
         echo Removed config directory: %CONFIG_DIR%
