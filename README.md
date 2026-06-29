@@ -2,6 +2,13 @@
 
 > Federated AWS credentials for developer laptops — short-lived, no static keys, gated by Microsoft Entra.
 
+### Why "tessera"?
+
+In a Roman camp the *tessera* was the **watchword token** — handed round and
+rotated each watch, so a stolen or stale one was worthless. `tess` puts your AWS
+identity on the same short clock: **minted at sign-in, auto-rotated by a
+background daemon, and useless the moment it expires.**
+
 `tess` is a cross-platform CLI that gives a laptop **IRSA-like** AWS credentials:
 sign in to **Microsoft Entra** (with MFA) → OIDC `id_token` →
 `AssumeRoleWithWebIdentity`. No static keys, no `~/.aws/`, an 8-hour session cap,
