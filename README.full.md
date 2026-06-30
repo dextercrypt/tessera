@@ -11,7 +11,10 @@ background daemon, and useless the moment it expires.**
 
 `tess` gives a laptop the same credential behavior a Kubernetes pod gets from
 **IRSA**: short-lived AWS credentials minted from your corporate OIDC identity
-provider, with **no long-lived access keys** and **no `~/.aws/`**. You run
+provider, with **no long-lived access keys** and **no `~/.aws/`**. It runs on any
+developer machine — laptop, desktop, or dev VM — i.e. any interactive human
+session (browser sign-in, MFA, a bounded session), as opposed to a pod or CI
+role. You run
 `tess start` in the morning, sign in to Microsoft Entra in the browser (with
 MFA), and from then on every AWS SDK and CLI on your machine transparently
 assumes an IAM role. A background daemon keeps the credential fresh until an
@@ -68,16 +71,35 @@ write your real config.
 ## Configure
 
 `tess` ships with **no org config** — only the template. Create your real config
-once by filling in four values:
+once by filling in the four required values (two optional keys tune behavior):
 
 ```json
 {
   "tenant_id": "<entra-tenant-guid-or-domain>",
   "client_id": "<entra-app-client-id>",
   "role_arn":  "arn:aws:iam::<account-id>:role/<role-name>",
-  "region":    "us-east-1"
+  "region":    "us-east-1",
+
+  "refresh_interval_minutes": 50,
+  "session_max_hours": 8
 }
 ```
+
+**Required**
+
+| Key | What it is |
+|---|---|
+| `tenant_id` | Your Entra **tenant** GUID or domain. |
+| `client_id` | The Entra app registration's **Application (client) ID**. This value is the OIDC token's audience (`aud`) that the AWS role's trust policy must trust. |
+| `role_arn` | ARN of the IAM role to assume, e.g. `arn:aws:iam::<account-id>:role/<role-name>`. |
+| `region` | AWS region, e.g. `us-east-1`. |
+
+**Optional** — the security / tuning knobs; omit either to use its default:
+
+| Key | Default | What it controls |
+|---|---|---|
+| `refresh_interval_minutes` | `50` | How often the background daemon re-mints the OIDC `id_token` so the credential never goes stale. OIDC tokens last ~1h, so refreshing at 50 min keeps a safe margin. Must be a positive number. |
+| `session_max_hours` | `8` | Hard cap on total session length. When reached, `tess` stops refreshing and the session ends, forcing a fresh MFA sign-in — bounding how long a single sign-in stays valid. Must be a positive number. |
 
 `tess` resolves the config file in this order (first match wins):
 `--config <path>` → `$TESS_CONFIG` → `./tess-config.json` (current dir) →

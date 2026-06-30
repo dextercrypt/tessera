@@ -2,7 +2,9 @@
 
 `tess` is a laptop CLI that gives developers short-lived, federated AWS
 credentials — the same behavior pods get from IRSA, but on a laptop and with no
-static keys and no `~/.aws`. You run `tess start`, sign in to Microsoft Entra in
+static keys and no `~/.aws`. It runs on any developer machine — laptop, desktop,
+or dev VM — i.e. any interactive human session, as opposed to a pod or CI role.
+You run `tess start`, sign in to Microsoft Entra in
 the browser (with MFA), and tess receives an OIDC **id_token**. It writes that
 token to a file (locked to `0600`) and sets a handful of `AWS_*` environment
 variables. From then on, any AWS SDK or CLI you run calls STS

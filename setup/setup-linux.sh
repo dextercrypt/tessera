@@ -54,7 +54,7 @@ if [ -n "$LOCAL_SRC" ] && [ -f "$LOCAL_SRC/tess.py" ] \
 else
     # Standalone run (e.g. piped from curl) — fetch the pinned, checksum-verified
     # release into a throwaway temp dir, verify BEFORE anything is installed.
-    echo "No local ../src — fetching tess $TESS_REF from GitHub..."
+    echo "Downloading and verifying tess $TESS_REF..."
     command -v curl >/dev/null 2>&1 || { echo "ERROR: curl is required to download tess."; exit 1; }
     STAGE="$(mktemp -d)"
     trap 'rm -rf "$STAGE"' EXIT

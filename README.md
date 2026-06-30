@@ -13,7 +13,9 @@ background daemon, and useless the moment it expires.**
 sign in to **Microsoft Entra** (with MFA) → OIDC `id_token` →
 `AssumeRoleWithWebIdentity`. No static keys, no `~/.aws/`, an 8-hour session cap,
 and a background daemon that auto-refreshes. Access is gated by a single Entra
-app per environment ("Assignment required").
+app per environment ("Assignment required"). It runs on any developer machine —
+laptop, desktop, or dev VM — i.e. any interactive human session, as opposed to a
+pod or CI role.
 
 ## Install
 
@@ -51,6 +53,10 @@ Create `tess-config.json` with four values:
   "region":    "us-east-1"
 }
 ```
+
+Two optional keys tune behavior: `refresh_interval_minutes` (default 50, the
+daemon's refresh cadence) and `session_max_hours` (default 8, the hard session
+cap before re-auth). Omit them to use the defaults.
 
 It lives at `~/.config/tess/tess-config.json` (macOS/Linux) or
 `%APPDATA%\tess\tess-config.json` (Windows); `tess config` shows the resolved

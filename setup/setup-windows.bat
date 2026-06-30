@@ -44,7 +44,7 @@ set SRC_DIR=%SCRIPT_DIR%..\src\
 if exist "%SRC_DIR%tess.py" (
     echo Using local source: %SRC_DIR%
 ) else (
-    echo No local ..\src - fetching tess %TESS_REF% from GitHub...
+    echo Downloading and verifying tess %TESS_REF%...
     if exist "%STAGE%" rmdir /s /q "%STAGE%"
     mkdir "%STAGE%\src"
     powershell -NoProfile -ExecutionPolicy Bypass -Command ^

@@ -5,7 +5,9 @@
 `tess` gives a laptop the same credential behavior a Kubernetes pod gets from
 **IRSA**: short-lived AWS credentials minted from a corporate OIDC identity
 provider, with **no static access keys** and **no per-application AWS config**.
-A developer runs `tess start`, signs into Microsoft Entra in the browser (with
+It runs on any developer machine — laptop, desktop, or dev VM — i.e. any
+interactive human session, as opposed to a pod or CI role. A developer runs
+`tess start`, signs into Microsoft Entra in the browser (with
 MFA), and from then on the AWS SDK in their shell and GUI apps transparently
 assumes an IAM role. A background daemon keeps the credential fresh until an
 8-hour cap or logout.
