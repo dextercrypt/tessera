@@ -1,0 +1,5 @@
+# tess development/test dependencies. Runtime deps live in src/requirements.txt
+# (NOT needed to run the test suite — the tests never import msal or
+# desktop_notifier; those are only imported inside the functions that talk to
+# Entra or the desktop, which the suite doesn't call).
+pytest==8.3.5
