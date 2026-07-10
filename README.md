@@ -27,17 +27,17 @@ Requires **Python 3.10+** on your `PATH`.
 
 ```bash
 # macOS
-curl -fsSL https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.0/setup/setup-macos.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.1/setup/setup-macos.sh | bash
 
 # Linux
-curl -fsSL https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.0/setup/setup-linux.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.1/setup/setup-linux.sh | bash
 ```
 ```powershell
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.0/setup/setup-windows.bat -OutFile setup.bat; .\setup.bat
+irm https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.1/setup/setup-windows.bat -OutFile setup.bat; .\setup.bat
 ```
 
-The one-liners fetch the pinned, checksum-verified `v1.0.0` release. Then open a
+The one-liners fetch the pinned, checksum-verified `v1.0.1` release. Then open a
 new terminal. For GUI apps (IntelliJ, etc.) to pick up the AWS env vars: on
 **macOS**, relaunch the app after `tess start` (log out/in if it still doesn't see
 them); on **Windows/Linux**, sign out and back in once.

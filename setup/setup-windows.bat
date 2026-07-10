@@ -36,7 +36,7 @@ if errorlevel 1 (
 REM ---- 2. Locate the program source: local ..\src, else fetch the pinned release ----
 REM Bump TESS_REF when cutting a new release.
 set SCRIPT_DIR=%~dp0
-set TESS_REF=v1.0.0
+set TESS_REF=v1.0.1
 set RAW_BASE=https://raw.githubusercontent.com/dextercrypt/tessera/%TESS_REF%
 set STAGE=%TEMP%\tessera-setup
 set SRC_DIR=%SCRIPT_DIR%..\src\

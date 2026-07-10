@@ -33,7 +33,7 @@ python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' || {
 
 # ---- 2. Locate the program source: local ../src, else fetch the pinned release ----
 # Bump TESS_REF when cutting a new release; override (e.g. TESS_REF=main) to test.
-TESS_REF="${TESS_REF:-v1.0.0}"
+TESS_REF="${TESS_REF:-v1.0.1}"
 RAW_BASE="https://raw.githubusercontent.com/dextercrypt/tessera/${TESS_REF}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || true)"

@@ -39,21 +39,21 @@ cap or logout. See [ARCHITECTURE.md](ARCHITECTURE.md) for the diagrams.
 ## Install
 
 Requires **Python 3.10+** on your `PATH`. The one-liners below fetch the pinned,
-checksum-verified `v1.0.0` release:
+checksum-verified `v1.0.1` release:
 
 **macOS**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.0/setup/setup-macos.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.1/setup/setup-macos.sh | bash
 ```
 
 **Linux**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.0/setup/setup-linux.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.1/setup/setup-linux.sh | bash
 ```
 
 **Windows (PowerShell)**
 ```powershell
-irm https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.0/setup/setup-windows.bat -OutFile setup.bat; .\setup.bat
+irm https://raw.githubusercontent.com/dextercrypt/tessera/v1.0.1/setup/setup-windows.bat -OutFile setup.bat; .\setup.bat
 ```
 
 The setup scripts are **bootstrap-only**: they create a dedicated Python venv,
