@@ -17,6 +17,10 @@ app per environment ("Assignment required"). It runs on any developer machine �
 laptop, desktop, or dev VM — i.e. any interactive human session, as opposed to a
 pod or CI role.
 
+![tess demo — sign in once, plain AWS CLI just works](docs/tess-demo.gif)
+
+*Demo session — placeholder identifiers.*
+
 ## Install
 
 Requires **Python 3.10+** on your `PATH`.
